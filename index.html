@@ -242,7 +242,7 @@
 </form></div>
 <script type="module">
 const ITER = 250000;
-const enc = fetch('app.enc').then((r) => r.arrayBuffer());
+const enc = fetch('app.enc', { cache: 'no-store' }).then((r) => r.arrayBuffer());
 async function open(pw) {
   const buf = new Uint8Array(await enc);
   const salt = buf.slice(0, 16), iv = buf.slice(16, 28), data = buf.slice(28);
@@ -270,7 +270,13 @@ if (!(saved && await tryPw(saved, false))) {
     else document.getElementById('gateErr').textContent = 'Esa no es. Prueba otra vez.';
   });
 }
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator) {
+  const had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').then((r) => r.update()).catch(() => {});
+  // si llega una versión nueva mientras está abierta, recargar una vez para usarla
+  let done = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (had && !done) { done = true; location.reload(); } });
+}
 </script>
 </body>
 </html>
