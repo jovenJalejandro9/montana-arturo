@@ -38,7 +38,7 @@
   h1 .b { display: block; font-weight: 800; font-size: clamp(54px, 11vw, 130px); color: #ffc53d; -webkit-text-stroke: clamp(9px, 1.5vw, 17px) var(--ink); paint-order: stroke fill; }
   .games { position: relative; z-index: 1; display: flex; gap: clamp(18px, 4vw, 56px); justify-content: center; align-items: center; flex-wrap: wrap; width: 100%; }
   .game {
-    --w: min(40vw, 460px, 62vh); width: var(--w); border: 0; padding: 0; cursor: pointer; background: #fff; border-radius: calc(var(--w) * .1);
+    --w: min(29vw, 400px, 58vh); width: var(--w); border: 0; padding: 0; cursor: pointer; background: #fff; border-radius: calc(var(--w) * .1);
     box-shadow: 0 12px 0 var(--d), 0 22px 40px rgba(30,20,60,.35); transform: rotate(var(--r)); animation: float 3.2s ease-in-out infinite; animation-delay: var(--del);
     transition: transform .12s; font-family: var(--font); position: relative;
   }
@@ -52,8 +52,9 @@
   .game .badge svg { width: 56%; height: 56%; }
   @keyframes pulse { 50% { transform: scale(1.12) rotate(8deg); } }
   #g1 { --r: -3deg; --c: #ff5a7a; --d: #c72c52; --del: 0s; background: linear-gradient(170deg, #ff9bb0, #ff5a7a); }
+  #g3 { --r: 1deg; --c: #7c5cff; --d: #4a2fc7; --del: -0.8s; background: linear-gradient(170deg, #b3a1ff, #7c5cff); }
   #g2 { --r: 3deg; --c: #ff8a00; --d: #c85f00; --del: -1.6s; background: linear-gradient(170deg, #ffc15c, #ff8a00); }
-  @media (max-aspect-ratio: 1/1) { .game { --w: min(78vw, 420px, 36vh); } }
+  @media (max-aspect-ratio: 1/1) { .game { --w: min(70vw, 360px, 25vh); } }
   @media (prefers-reduced-motion: reduce) { .game, .badge, .cloud { animation: none !important; } }
   #gate { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #7d5cff, #2a1b4d 75%); padding: 16px; }
   #gate[hidden] { display: none; }
@@ -85,6 +86,11 @@
       <img class="pic" src="montana.jpg" alt="">
       <span class="name">Montaña rusa</span>
       <span class="badge"><svg viewBox="0 0 100 100"><path d="M36 24 Q30 20 30 28 L30 72 Q30 80 37 76 L76 54 Q82 50 76 46 Z" fill="#fff"/></svg></span>
+    </button>
+    <button class="game" id="g3" data-go="montana2/" data-say="montana2" aria-label="La montaña rusa de los números">
+      <img class="pic" src="montana2.jpg" alt="">
+      <span class="name">Montaña rusa 2</span>
+      <span class="badge"><b style="font-size:calc(var(--w)*.14);line-height:1">123</b></span>
     </button>
     <button class="game" id="g2" data-go="carreras/" data-say="carreras" aria-label="Las carreras">
       <img class="pic" src="carreras.jpg" alt="">
@@ -120,7 +126,7 @@
       else err.textContent = 'Esa no es. Prueba otra vez.';
     });
   }
-  const clips = { hola: new Audio('hola.mp3'), montana: new Audio('montana.mp3'), carreras: new Audio('carreras.mp3') };
+  const clips = { hola: new Audio('hola.mp3'), montana: new Audio('montana.mp3'), montana2: new Audio('montana2.mp3'), carreras: new Audio('carreras.mp3') };
   let greeted = false, busy = false;
   const play = (k) => { try { Object.values(clips).forEach((a) => { a.pause(); a.currentTime = 0; }); return clips[k].play(); } catch (e) { return Promise.resolve(); } };
   // saludo: si el navegador lo permite al abrir; si no, al primer toque en el fondo
