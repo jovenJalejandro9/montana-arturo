@@ -1,4 +1,4 @@
-const CACHE = 'hub-43b292e439';
+const CACHE = 'hub-9ea3bddddd';
 const FILES = ["./", "index.html", "fonts.css", "manifest.webmanifest", "montana.jpg", "carreras.jpg", "hola.mp3", "montana.mp3", "carreras.mp3", "icon-180.png", "icon-192.png", "icon-512.png", "fonts/983902d8e059.woff2", "fonts/b5a7e427be1d.woff2", "fonts/e1088f01af32.woff2"];
 const MINE = new Set(FILES.map((f) => new URL(f, self.registration.scope).href));
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting())); });

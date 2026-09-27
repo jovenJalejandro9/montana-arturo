@@ -55,9 +55,24 @@
   #g2 { --r: 3deg; --c: #ff8a00; --d: #c85f00; --del: -1.6s; background: linear-gradient(170deg, #ffc15c, #ff8a00); }
   @media (max-aspect-ratio: 1/1) { .game { --w: min(78vw, 420px, 36vh); } }
   @media (prefers-reduced-motion: reduce) { .game, .badge, .cloud { animation: none !important; } }
+  #gate { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #7d5cff, #2a1b4d 75%); padding: 16px; }
+  #gate[hidden] { display: none; }
+  #gate .box { width: min(380px, 100%); display: grid; gap: 16px; text-align: center; color: #fff8ee; }
+  #gate h2 { margin: 0; font-size: 34px; line-height: 1.05; font-weight: 800; }
+  #gate p { margin: 0; font-weight: 600; opacity: .8; }
+  #gate input { font: 800 26px var(--font); text-align: center; padding: 14px; border-radius: 18px; border: 0; color: #2a1b4d; letter-spacing: .2em; }
+  #gate button { font: 800 24px var(--font); padding: 14px; border-radius: 999px; border: 0; background: #2fd073; color: #fff; box-shadow: 0 8px 0 #179a4c; cursor: pointer; }
+  #gate .err { color: #ffb3c1; min-height: 1.3em; font-weight: 700; }
 </style>
 </head>
 <body>
+  <div id="gate" hidden><form class="box" id="gateForm">
+    <h2>Los juegos<br>de Arturo</h2>
+    <p>Contraseña (solo la primera vez)</p>
+    <input id="gatePw" type="password" inputmode="numeric" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false">
+    <button type="submit">Entrar</button>
+    <div class="err" id="gateErr"></div>
+  </form></div>
   <div class="cloud" style="top:12vh;width:160px;height:44px;animation-duration:48s;animation-delay:-10s"></div>
   <div class="cloud" style="top:30vh;width:110px;height:32px;animation-duration:36s;animation-delay:-25s"></div>
   <div class="cloud" style="top:6vh;width:90px;height:26px;animation-duration:60s;animation-delay:-40s"></div>
@@ -79,11 +94,37 @@
   </div>
 
 <script>
+  // Contraseña al entrar: se comprueba descifrando el juego (misma clave que usan los dos juegos) y se recuerda.
+  const get = () => { try { return localStorage.getItem('arturo.pw'); } catch (e) { return null; } };
+  const set = (v) => { try { localStorage.setItem('arturo.pw', v); } catch (e) {} };
+  let encBuf = null;
+  async function check(pw) {
+    try {
+      encBuf ||= new Uint8Array(await (await fetch('montana/app.enc', { cache: 'no-store' }).catch(() => fetch('montana/app.enc'))).arrayBuffer());
+      const salt = encBuf.slice(0, 16), iv = encBuf.slice(16, 28), data = encBuf.slice(28);
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+      return true;
+    } catch (e) { return false; }
+  }
+  const gate = document.getElementById('gate');
+  if (!get()) {
+    gate.hidden = false;
+    document.getElementById('gateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pw = document.getElementById('gatePw').value.trim().toLowerCase();
+      const err = document.getElementById('gateErr');
+      err.textContent = 'Abriendo…';
+      if (await check(pw)) { set(pw); gate.hidden = true; greeted = true; play('hola'); }
+      else err.textContent = 'Esa no es. Prueba otra vez.';
+    });
+  }
   const clips = { hola: new Audio('hola.mp3'), montana: new Audio('montana.mp3'), carreras: new Audio('carreras.mp3') };
   let greeted = false, busy = false;
   const play = (k) => { try { Object.values(clips).forEach((a) => { a.pause(); a.currentTime = 0; }); return clips[k].play(); } catch (e) { return Promise.resolve(); } };
   // saludo: si el navegador lo permite al abrir; si no, al primer toque en el fondo
-  setTimeout(() => play('hola')?.then?.(() => (greeted = true)).catch(() => {}), 500);
+  if (get()) setTimeout(() => play('hola')?.then?.(() => (greeted = true)).catch(() => {}), 500);
   document.body.addEventListener('pointerdown', (e) => { if (!greeted && !e.target.closest('.game')) { greeted = true; play('hola'); } });
   document.querySelectorAll('.game').forEach((b) => b.addEventListener('click', () => {
     if (busy) return; busy = true;
