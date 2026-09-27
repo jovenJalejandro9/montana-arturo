@@ -92,6 +92,7 @@
     box-shadow: 0 10px 0 color-mix(in srgb, var(--b) 60%, #1b0f33), 0 20px 30px rgba(30,20,60,.35), inset 0 0 0 6px rgba(255,255,255,.9);
     transform: translateY(140%) rotate(var(--r, 0deg)); transition: transform .5s cubic-bezier(.3,1.5,.5,1), box-shadow .08s; }
   #cards[data-n="4"] .card { --w: min(22.5vw, 250px, 36vh); }
+  #cards[data-n="5"] .card { --w: min(18.2vw, 220px, 34vh); }
   .card.in { transform: translateY(0) rotate(var(--r, 0deg)); }
   .card.out { transform: translateY(150%) rotate(var(--r, 0deg)); transition: transform .35s ease-in; }
   .card.chosen { transform: translateY(-30px) scale(1.12); transition: transform .3s cubic-bezier(.3,1.8,.5,1); z-index: 2; }
