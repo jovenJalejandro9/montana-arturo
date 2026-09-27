@@ -1,6 +1,6 @@
 {
- "name": "Los Juegos de Arturo",
- "short_name": "Arturo",
+ "name": "Las Carreras de Arturo",
+ "short_name": "Carreras",
  "start_url": "./",
  "scope": "./",
  "display": "fullscreen",

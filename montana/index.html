@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>La Montaña Rusa de Arturo</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="fonts.css">
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #2a1b4d;
+    --ink-soft: rgba(42, 27, 77, 0.55);
+    --cream: #fff8ee;
+    --go: #2fd073; --go-d: #179a4c;
+    --sun: #ffb627; --sun-d: #d9780a;
+    --berry: #ff5a7a; --berry-d: #c72c52;
+    --sky: #4d96ff; --sky-d: #2462c9;
+    --font: "Baloo 2", "Arial Rounded MT Bold", ui-rounded, system-ui, sans-serif;
+    --hand: "Gochi Hand", "Baloo 2", cursive;
+    --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px);
+  }
+  html, body { height: 100%; margin: 0; background: #8fd0ff; overflow: hidden; }
+  body { font-family: var(--font); color: var(--ink); -webkit-user-select: none; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+  canvas#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .layer { position: fixed; inset: 0; pointer-events: none; }
+  [hidden] { display: none !important; }
+  button { font-family: var(--font); border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  button:focus-visible { outline: 5px solid #fff; outline-offset: 4px; }
+
+  /* ---------- botón de juguete ---------- */
+  .toy {
+    --c: var(--go); --d: var(--go-d);
+    pointer-events: auto; position: relative; display: grid; place-items: center;
+    background: radial-gradient(120% 90% at 50% 20%, color-mix(in srgb, var(--c) 70%, #fff) 0%, var(--c) 55%);
+    color: #fff; border-radius: 999px;
+    box-shadow: 0 10px 0 var(--d), 0 18px 28px rgba(30, 20, 60, 0.35), inset 0 -6px 0 rgba(0,0,0,0.08), inset 0 5px 0 rgba(255,255,255,0.35);
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .toy:active, .toy.pressed { transform: translateY(8px); box-shadow: 0 2px 0 var(--d), 0 6px 12px rgba(30,20,60,.3), inset 0 -6px 0 rgba(0,0,0,0.08), inset 0 5px 0 rgba(255,255,255,0.35); }
+  .toy svg { width: 55%; height: 55%; filter: drop-shadow(0 3px 0 rgba(0,0,0,0.18)); }
+  .wiggle { animation: wiggle 1.6s ease-in-out infinite; }
+  @keyframes wiggle { 0%,100% { transform: scale(1) rotate(0); } 10% { transform: scale(1.08) rotate(-4deg); } 20% { transform: scale(1.08) rotate(4deg); } 30% { transform: scale(1) rotate(0); } }
+  .toy.wiggle:active { animation: none; }
+
+  /* ---------- carga y transición ---------- */
+  #loading { display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #bfe6ff, #6fb8ff); z-index: 50; pointer-events: auto; transition: opacity .5s; }
+  #loading .spin { width: 90px; height: 90px; border-radius: 50%; border: 12px solid rgba(255,255,255,.4); border-top-color: #fff; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #wipe { background: radial-gradient(circle at 50% 50%, #fff 0%, #fff6d8 100%); opacity: 0; transition: opacity .35s ease; z-index: 40; }
+  #wipe.on { opacity: 1; }
+  #flash { background: #fff; opacity: 0; z-index: 39; }
+  #flash.go { animation: flash .6s ease-out; }
+  @keyframes flash { 0% { opacity: .95 } 100% { opacity: 0 } }
+
+  /* ---------- portada ---------- */
+  #title { display: grid; grid-template-rows: 1fr auto 1fr; justify-items: center; align-items: center; pointer-events: none; z-index: 10;
+    background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255,255,255,0.0), rgba(20,10,50,0.18)); }
+  #title .logo { grid-row: 2; text-align: center; line-height: .82; transform: rotate(-3deg); filter: drop-shadow(0 10px 0 rgba(42,27,77,.35)); }
+  #title .logo .l1 { font-weight: 800; font-size: clamp(30px, 6.2vw, 72px); color: #fff; -webkit-text-stroke: clamp(6px, 1vw, 12px) var(--ink); paint-order: stroke fill; letter-spacing: .01em; }
+  #title .logo .l2 { font-weight: 800; font-size: clamp(64px, 15vw, 190px); letter-spacing: .02em; display: block; margin-top: .06em; }
+  #title .logo .l2 .w { display: inline-block; position: relative; animation: bounceL 2.4s ease-in-out infinite; }
+  #title .logo .l2 .b { position: absolute; inset: 0; -webkit-text-stroke: clamp(14px, 2.6vw, 30px) var(--ink); color: var(--ink); }
+  #title .logo .l2 .f { position: relative; background: linear-gradient(180deg, #fff6a8 18%, #ffc53d 52%, #ff7a1a 88%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #ffc53d; }
+  #title .play { grid-row: 3; align-self: start; width: clamp(120px, 20vmin, 180px); aspect-ratio: 1; margin-top: 3vh; }
+  @keyframes bounceL { 0%,70%,100% { transform: translateY(0) } 80% { transform: translateY(-10%) } 90% { transform: translateY(0) } }
+
+  /* ---------- globo de texto ---------- */
+  #prompt { position: fixed; left: 50%; top: calc(14px + var(--safe-t)); transform: translateX(-50%); z-index: 12;
+    background: var(--cream); color: var(--ink); font-weight: 800; font-size: clamp(22px, 3.2vw, 36px); line-height: 1.1;
+    padding: .38em .95em .3em; border-radius: 999px; box-shadow: 0 6px 0 rgba(42,27,77,.25), 0 10px 24px rgba(42,27,77,.2);
+    white-space: nowrap; transition: opacity .25s, transform .25s; pointer-events: none; }
+  @media (max-width: 640px) { #prompt { white-space: normal; text-align: center; width: max-content; max-width: calc(100vw - 130px); font-size: 19px; } }
+  @media (max-aspect-ratio: 3/4) { .card { --w: min(31vw, 300px, 40vh); } #cards { gap: 8px; } }
+  #prompt.hide { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  #prompt.bump { animation: bump .45s ease; }
+  @keyframes bump { 0% { transform: translateX(-50%) scale(.8) } 60% { transform: translateX(-50%) scale(1.08) } 100% { transform: translateX(-50%) scale(1) } }
+
+  /* ---------- progreso ---------- */
+  #progress { position: fixed; left: calc(14px + var(--safe-l)); top: calc(90px + var(--safe-t)); display: flex; flex-direction: column; gap: 8px; z-index: 12; align-items: center; pointer-events: none; }
+  #progress .dot { width: clamp(30px, 4.2vw, 44px); aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.55); box-shadow: inset 0 4px 0 rgba(42,27,77,.18); display: grid; place-items: center; transition: transform .3s; }
+  #progress .dot.on { background: var(--g); box-shadow: 0 4px 0 rgba(42,27,77,.35), inset 0 3px 0 rgba(255,255,255,.4); transform: scale(1.06); }
+  #progress .dot.now { outline: 4px solid #fff; outline-offset: 2px; animation: pulse 1.2s ease-in-out infinite; }
+  #progress .dot svg { width: 60%; height: 60%; }
+  @keyframes pulse { 50% { transform: scale(1.12) } }
+
+  /* ---------- tarjetas ---------- */
+  #cards { position: fixed; left: 0; right: 0; bottom: calc(18px + var(--safe-b)); display: flex; justify-content: center; gap: clamp(12px, 2.4vw, 32px); z-index: 11; pointer-events: none; padding-inline: 16px; }
+  .card { --w: min(29vw, 300px, 40vh); pointer-events: auto; width: var(--w); aspect-ratio: 1 / 1.08; position: relative; border-radius: calc(var(--w) * .13);
+    background: linear-gradient(165deg, var(--a), var(--b)); padding: 0; overflow: hidden; color: #fff;
+    box-shadow: 0 10px 0 color-mix(in srgb, var(--b) 60%, #1b0f33), 0 20px 30px rgba(30,20,60,.35), inset 0 0 0 6px rgba(255,255,255,.9);
+    transform: translateY(140%) rotate(var(--r, 0deg)); transition: transform .5s cubic-bezier(.3,1.5,.5,1), box-shadow .08s; }
+  #cards[data-n="4"] .card { --w: min(22.5vw, 250px, 36vh); }
+  #cards[data-n="5"] .card { --w: min(18.2vw, 220px, 34vh); }
+  .card.in { transform: translateY(0) rotate(var(--r, 0deg)); }
+  .card.out { transform: translateY(150%) rotate(var(--r, 0deg)); transition: transform .35s ease-in; }
+  .card.chosen { transform: translateY(-30px) scale(1.12); transition: transform .3s cubic-bezier(.3,1.8,.5,1); z-index: 2; }
+  .card:active { transform: translateY(8px) scale(.97); box-shadow: 0 2px 0 color-mix(in srgb, var(--b) 60%, #1b0f33), 0 6px 12px rgba(30,20,60,.3), inset 0 0 0 6px rgba(255,255,255,.9); }
+  .card.in.nudge { animation: nudge .7s ease; }
+  @keyframes nudge { 0%,100% { transform: translateY(0) rotate(var(--r, 0deg)); } 30% { transform: translateY(-26px) rotate(calc(var(--r, 0deg) - 4deg)) scale(1.05); } 60% { transform: translateY(0) rotate(calc(var(--r, 0deg) + 3deg)); } }
+  .card canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .card .shine { position: absolute; inset: 0; background: radial-gradient(90% 60% at 30% 0%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%); pointer-events: none; }
+  .card .label { position: absolute; left: 0; right: 0; bottom: 6%; text-align: center; font-weight: 800; font-size: calc(var(--w) * .13); line-height: 1;
+    -webkit-text-stroke: calc(var(--w) * .022) color-mix(in srgb, var(--b) 45%, #1b0f33); paint-order: stroke fill; letter-spacing: .01em; }
+  .card .key { position: absolute; top: 7%; left: 8%; width: calc(var(--w) * .14); aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.3); font-weight: 800; font-size: calc(var(--w) * .085); display: grid; place-items: center; }
+  @media (hover: none) { .card .key { display: none; } }
+
+  /* ---------- botón VAMOS ---------- */
+  #go { position: fixed; left: 50%; bottom: calc(26px + var(--safe-b)); transform: translateX(-50%); z-index: 12; pointer-events: none; display: grid; justify-items: center; gap: 10px; }
+  #go .toy { width: clamp(150px, 24vmin, 210px); aspect-ratio: 1; --c: var(--go); --d: var(--go-d); }
+  #go .txt { font-weight: 800; font-size: clamp(30px, 5vw, 54px); color: #fff; -webkit-text-stroke: 10px var(--ink); paint-order: stroke fill; line-height: 1; }
+
+  /* ---------- viaje ---------- */
+  #rideui { z-index: 12; }
+  #camBtn { position: fixed; right: calc(20px + var(--safe-r)); bottom: calc(24px + var(--safe-b)); width: clamp(76px, 11vmin, 104px); aspect-ratio: 1; --c: var(--sky); --d: var(--sky-d); }
+  #hands { position: fixed; left: calc(22px + var(--safe-l)); bottom: calc(24px + var(--safe-b)); width: clamp(76px, 11vmin, 104px); aspect-ratio: 1; --c: var(--sun); --d: var(--sun-d); }
+
+  /* ---------- final ---------- */
+  #end { z-index: 13; display: flex; align-items: center; justify-content: center; gap: clamp(20px, 6vw, 90px); padding-inline: 16px; flex-wrap: wrap; }
+  #end .polaroid { pointer-events: auto; width: min(58vw, 700px, 78vh); transform: rotate(-3deg) translateY(40px) scale(.6); opacity: 0; transition: transform .8s cubic-bezier(.3,1.4,.5,1), opacity .3s; filter: drop-shadow(0 24px 40px rgba(20,10,50,.5)); }
+  #end.show .polaroid { transform: rotate(-3deg) translateY(0) scale(1); opacity: 1; }
+  #end .polaroid canvas { width: 100%; display: block; border-radius: 18px; }
+  #photoMini { position: fixed; right: calc(20px + var(--safe-r)); top: calc(80px + var(--safe-t)); width: min(26vw, 240px); border-radius: 10px; z-index: 14; pointer-events: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4); border: 5px solid #fff; transform: translateX(140%) rotate(6deg); }
+  #photoMini.pop { animation: mini 3s cubic-bezier(.3,1.3,.5,1) forwards; }
+  @keyframes mini { 0% { transform: translateX(140%) rotate(6deg) } 15%, 80% { transform: translateX(0) rotate(4deg) } 100% { transform: translateX(140%) rotate(6deg) } }
+  #end .btns { display: flex; flex-direction: column; gap: clamp(26px, 5vh, 44px); align-items: center; }
+  #end .btn { display: grid; justify-items: center; gap: 6px; pointer-events: none; }
+  #end .btn .toy { width: clamp(110px, 17vmin, 160px); aspect-ratio: 1; }
+  #end .btn .t { font-weight: 800; font-size: clamp(22px, 3.4vw, 34px); color: #fff; -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; line-height: 1; }
+  #again { --c: var(--go); --d: var(--go-d); }
+  #newOne { --c: var(--sun); --d: var(--sun-d); }
+  @media (max-aspect-ratio: 1/1) { #end { flex-direction: column; } #end .btns { flex-direction: row; } }
+
+  /* ---------- zona de padres ---------- */
+  #gear { position: fixed; right: calc(14px + var(--safe-r)); top: calc(14px + var(--safe-t)); width: 52px; height: 52px; border-radius: 50%; z-index: 20; pointer-events: auto;
+    background: rgba(255,255,255,.35); display: grid; place-items: center; color: var(--ink); }
+  #gear svg.cog { width: 28px; height: 28px; opacity: .7; }
+  #gear svg.ring { position: absolute; inset: -4px; width: 60px; height: 60px; transform: rotate(-90deg); }
+  #gear svg.ring circle { fill: none; stroke: #fff; stroke-width: 5; stroke-dasharray: 170; stroke-dashoffset: 170; stroke-linecap: round; }
+  #homeBtn { position: fixed; left: calc(14px + var(--safe-l)); top: calc(14px + var(--safe-t)); width: 56px; height: 56px; border-radius: 50%; z-index: 20; background: rgba(255,255,255,.8); color: var(--ink); display: grid; place-items: center; box-shadow: 0 5px 0 rgba(42,27,77,.25); }
+  #homeBtn svg { width: 30px; height: 30px; }
+  body:has(#title:not([hidden])) #homeBtn:not([hidden]) { display: grid; }
+  body:not(:has(#title:not([hidden]))) #homeBtn { display: none; }
+  #parent { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: rgba(30,20,60,.45); pointer-events: auto; }
+  #parent .panel { background: var(--cream); border-radius: 28px; padding: 26px 28px; width: min(420px, calc(100vw - 32px)); display: grid; gap: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+  #parent h2 { margin: 0; font-size: 28px; line-height: 1.1; }
+  #parent p { margin: 0; color: var(--ink-soft); font-weight: 600; font-size: 15px; line-height: 1.35; }
+  #parent label { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 20px; }
+  #parent input[type=checkbox] { width: 26px; height: 26px; accent-color: var(--go-d); }
+  #parent .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  #parent .row button { flex: 1; padding: 12px 14px; border-radius: 16px; font-weight: 800; font-size: 18px; background: #efe6ff; color: var(--ink); }
+  #parent .row button.primary { background: var(--go); color: #fff; }
+  #parent input[type=text] { font: 700 20px var(--font); padding: 8px 12px; border-radius: 12px; border: 2px solid #ddd2f5; width: 100%; box-sizing: border-box; color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) { .wiggle, #title .logo .l2 .w, #progress .dot.now { animation: none; } }
+</style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Montaña Rusa">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2a1b4d">
+<style>
+  #gate { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #7d5cff, #2a1b4d 75%); padding: 16px; }
+  #gate .box { width: min(380px, 100%); display: grid; gap: 16px; text-align: center; color: #fff8ee; font-family: var(--font); }
+  #gate h1 { margin: 0; font-size: 34px; line-height: 1.05; font-weight: 800; }
+  #gate p { margin: 0; font-weight: 600; opacity: .8; }
+  #gate input { font: 800 24px var(--font); text-align: center; padding: 14px; border-radius: 18px; border: 0; color: #2a1b4d; }
+  #gate button { font: 800 24px var(--font); padding: 14px; border-radius: 999px; background: #2fd073; color: #fff; box-shadow: 0 8px 0 #179a4c; }
+  #gate .err { color: #ffb3c1; min-height: 1.3em; }
+</style>
+<script>window.__HUB = '../';</script></head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="title" class="layer" hidden>
+  <div class="logo"><span class="l1">La montaña rusa de</span><span class="l2" id="titleName">Arturo</span></div>
+  <button class="toy play wiggle" id="playBtn" aria-label="Jugar">
+    <svg viewBox="0 0 100 100"><path d="M36 24 Q30 20 30 28 L30 72 Q30 80 37 76 L76 54 Q82 50 76 46 Z" fill="#fff"/></svg>
+  </button>
+</div>
+
+<div id="prompt" class="hide"></div>
+<div id="progress" hidden></div>
+<div id="cards"></div>
+
+<div id="go" hidden>
+  <button class="toy wiggle" id="goBtn" aria-label="¡Vamos!">
+    <svg viewBox="0 0 100 100"><path d="M36 24 Q30 20 30 28 L30 72 Q30 80 37 76 L76 54 Q82 50 76 46 Z" fill="#fff"/></svg>
+  </button>
+  <div class="txt">¡VAMOS!</div>
+</div>
+
+<div id="rideui" class="layer" hidden>
+  <button class="toy" id="hands" aria-label="Manos arriba">
+    <svg viewBox="0 0 100 100"><g fill="#fff"><path d="M28 60 L22 30 Q21 24 26 24 Q30 24 31 29 L35 46 L34 20 Q34 14 39 14 Q44 14 44 20 L45 44 L47 16 Q47 10 52 10 Q57 11 57 17 L56 44 L60 22 Q61 16 66 17 Q71 18 70 24 L66 50 L72 42 Q76 37 80 40 Q84 44 80 49 L66 72 Q58 86 44 86 Q30 84 28 60 Z"/></g></svg>
+  </button>
+  <button class="toy" id="camBtn" aria-label="Cambiar cámara">
+    <svg viewBox="0 0 100 100" id="camIcon"></svg>
+  </button>
+</div>
+
+<div id="end" class="layer" hidden>
+  <div class="polaroid"><canvas id="photo" width="1400" height="1240"></canvas></div>
+  <div class="btns">
+    <div class="btn"><button class="toy wiggle" id="again" aria-label="Otra vez">
+      <svg viewBox="0 0 100 100"><path d="M50 18 A32 32 0 1 1 20 42" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"/><path d="M50 4 L66 18 L50 32 Z" fill="#fff" stroke="#fff" stroke-width="6" stroke-linejoin="round"/></svg>
+    </button><div class="t">¡Otra vez!</div></div>
+    <div class="btn"><button class="toy" id="newOne" aria-label="Construir otra">
+      <svg viewBox="0 0 100 100"><path d="M50 18 L50 82 M18 50 L82 50" stroke="#fff" stroke-width="16" stroke-linecap="round"/></svg>
+    </button><div class="t">¡Otra nueva!</div></div>
+  </div>
+</div>
+
+<button id="homeBtn" hidden aria-label="Volver al menú"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" fill="currentColor"/></svg></button>
+<button id="gear" aria-label="Ajustes para mayores (mantén pulsado)">
+  <svg class="cog" viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.7 7.7 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a7.5 7.5 0 0 0-1.7-1L15 3.3h-4l-.3 2.7a7.5 7.5 0 0 0-1.7 1l-2.5-1-2 3.4L6.6 11a7.7 7.7 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1c.5.4 1.1.7 1.7 1l.3 2.7h4l.3-2.7c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.4L19.4 13ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)"/></svg>
+  <svg class="ring" viewBox="0 0 60 60"><circle cx="30" cy="30" r="27"/></svg>
+</button>
+<div id="parent" hidden>
+  <div class="panel">
+    <h2>Para mayores</h2>
+    <p>Arturo elige mundo, vagón y 5 piezas; luego se monta. Toca la pantalla en el viaje para levantar las manos. En ordenador: teclas 1, 2 y 3, Intro y C (cámara).</p>
+    <label for="optName">Nombre <input type="text" id="optName" maxlength="14" style="width: 60%"></label>
+    <label for="optSound">Sonido <input type="checkbox" id="optSound" checked></label>
+    <label for="optMusic">Música <input type="checkbox" id="optMusic" checked></label>
+    <label for="optVoice">Voz <input type="checkbox" id="optVoice" checked></label>
+    <label for="optLow">Modo tablet antigua <input type="checkbox" id="optLow"></label>
+    <div class="row"><button id="optFull">Pantalla completa</button><button id="optHome">Volver al inicio</button></div>
+    <div class="row"><button class="primary" id="optClose">Cerrar</button></div>
+  </div>
+</div>
+
+<canvas id="photoMini" width="350" height="310"></canvas>
+<div id="flash" class="layer"></div>
+<div id="wipe" class="layer"></div>
+<div id="loading" class="layer"><div class="spin"></div></div>
+
+<div id="gate" hidden><form class="box" id="gateForm">
+  <h1>La Montaña Rusa<br>de Arturo</h1>
+  <p>Contraseña (solo la primera vez)</p>
+  <input id="gatePw" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false">
+  <button type="submit">Entrar</button>
+  <div class="err" id="gateErr"></div>
+</form></div>
+<script type="module">
+const ITER = 250000;
+const enc = fetch('app.enc', { cache: 'no-store' }).then((r) => r.arrayBuffer());
+async function open(pw) {
+  const buf = new Uint8Array(await enc);
+  const salt = buf.slice(0, 16), iv = buf.slice(16, 28), data = buf.slice(28);
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: ITER, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  const js = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+  const url = URL.createObjectURL(new Blob([js], { type: 'text/javascript' }));
+  await import(url);
+}
+const get = () => { try { return localStorage.getItem('arturo.pw'); } catch (e) { return null; } };
+const set = (v) => { try { localStorage.setItem('arturo.pw', v); } catch (e) {} };
+async function tryPw(pw, remember) {
+  try { await open(pw); if (remember) set(pw); document.getElementById('gate').hidden = true; return true; }
+  catch (e) { return false; }
+}
+const saved = get();
+if (!(saved && await tryPw(saved, false))) {
+  document.getElementById('loading').hidden = true;
+  const g = document.getElementById('gate'); g.hidden = false;
+  document.getElementById('gateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pw = document.getElementById('gatePw').value.trim().toLowerCase();
+    document.getElementById('gateErr').textContent = 'Abriendo…';
+    if (await tryPw(pw, true)) { document.getElementById('loading').hidden = false; }
+    else document.getElementById('gateErr').textContent = 'Esa no es. Prueba otra vez.';
+  });
+}
+if ('serviceWorker' in navigator) {
+  const had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').then((r) => r.update()).catch(() => {});
+  // si llega una versión nueva mientras está abierta, recargar una vez para usarla
+  let done = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (had && !done) { done = true; location.reload(); } });
+}
+</script>
+</body>
+</html>
